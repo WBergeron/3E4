@@ -21,15 +21,15 @@ class PlanetsRoutes {
     getOne(req, res, next) {
 
         // for(let planet of PLANETS){
-            //     if(planet.id === idPlanet){
-                //         // Planet trouver
-                //         res.status(200);
-                //         res.json(planet);
-                //         break;
-                //     }
-                // }
-                // res.status();
-                
+        //     if(planet.id === idPlanet){
+        //         // Planet trouver
+        //         res.status(200);
+        //         res.json(planet);
+        //         break;
+        //     }
+        // }
+        // res.status();
+
         const idPlanet = parseInt(req.params.idPlanet, 10);
         const planet = PLANETS.filter((p) => p.id === idPlanet)
         if (planet.length > 0) {
@@ -41,9 +41,6 @@ class PlanetsRoutes {
         }
     }
 
-    post(req, res, next) {
-
-    }
 
     deleteOne(req, res, next) {
         const idPlanet = parseInt(req.params.idPlanet, 10);
@@ -56,6 +53,25 @@ class PlanetsRoutes {
         res.status(204).end();
     }
 
+    post(req, res, next) {
+        const newPlanet = req.body;
+
+        if (newPlanet) {
+
+            const index = PLANETS.findIndex(p => p.id === req.body.id);
+
+            if (index === -1) {
+                PLANETS.push(newPlanet);
+                res.status(201).json(newPlanet);
+            }
+            else {
+                return next(HTTPERROR.Conflict(`Une planète avec l'identifiant ${req.body.id}`));
+            }
+
+        } else {
+            return next(HTTPERROR.BadRequest('Aucune information tranmise'));
+        }
+    }
 }
 
 new PlanetsRoutes();
