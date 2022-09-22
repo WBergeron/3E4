@@ -1,9 +1,18 @@
 import Planet from '../models/planet-model.js';
 import dayjs from 'dayjs';
 
+const ZERO_KELVIN = -273.15;
+
 class PlanetsRepository {
-    retrieveAll() {
-        return Planet.find(); // comme un SELECT * FROM planets
+    retrieveAll(filter = {}) {
+
+        const filterSansWhere = {};
+
+        const testFiltre = { discoveredBy : 'Skadex' }; // WHERE discoveredBy = 'Skadex'
+
+        const testFiltreAnd = { temperature : {$gt: 240}, 'position.y':{$lt:500}}; // ($lt <) ($gt >) ($lte <=) ($gte >=)
+
+        return Planet.find(filter); // comme un SELECT * FROM planets
     }
 
     retrieveOne(idPlanet){
@@ -15,15 +24,37 @@ class PlanetsRepository {
         return Planet.create(planet); // INSERT () INTO planets VALUES()
     }
 
-    transform(planet)
+    deleteOne(idPlanet)
     {
-        planet.discoveryDate = day.js(planet.discoveryDate).format('YYYY-MM-DD');
+        return Planet.findByIdAndDelete(idPlanet);
+    }
+
+    transform(planet, transformsOptions = {})
+    {
+
+        if (transformsOptions) {
+            //Changer les unités
+            if (transformsOptions.unit === 'c') {
+                planet.temperature += ZERO_KELVIN;
+            }
+        }
+
+
+        //TODO TP - HexMatrix
+        this.calculateHexMatrix();
+        //TODO TP - Wind Direction
+
+        planet.discoveryDate = dayjs(planet.discoveryDate).format('YYYY-MM-DD');
 
         delete planet.createAt;
         delete planet.updateAt;
         delete planet.__v;
 
         return planet;
+    }
+
+    calculateHexMatrix(HexMatrix) {
+
     }
 }
 

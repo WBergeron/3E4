@@ -16,10 +16,31 @@ class PlanetsRoutes {
 
     async getAll(req, res, next) {
         try {
-            const planets = await planetsRepository.retrieveAll();
+            const transformsOptions = {};
+            const filter = {};
+
+            if (req.query.explorer) {
+                filter.discoveredBy = req.query.explorer;
+            }
+
+            if (req.query.unit) {
+                const unit = req.query.unit;
+                if (unit === 'c') {
+                    transformsOptions.unit = unit;
+                } else {
+                    return next(HTTPERROR.BadRequest('Le paramètre unit doit avoir comme valeur c pour Celsius'));
+                }
+            }
+
+            let planets = await planetsRepository.retrieveAll(filter);
 
             //Transformation
-            
+            //Map == boucle
+            planets = planets.map(p =>{
+                p = p.toObject({getters:false, virtuals:false});
+                p = planetsRepository.transform(p, transformsOptions);
+                return p;
+            });
 
             res.status(200).json(planets);
         } catch (err) {
@@ -37,6 +58,7 @@ class PlanetsRoutes {
             }
             //Transformer l'objet
             planet = planet.toObject({getters:false, virtuals:false});
+            planet = planetsRepository.transform(planet);
             res.status(200).json(planet);
         } catch (err) {
             return next(err);
@@ -45,15 +67,21 @@ class PlanetsRoutes {
     }
 
 
-    deleteOne(req, res, next) {
-        const idPlanet = parseInt(req.params.idPlanet, 10);
-        const index = PLANETS.findIndex(p => p.id === idPlanet);
-
-        if (index === -1) {
-            return next(HTTPERROR.NotFound(`La planète avec l'identifiant ${idPlanet} n'existe pas`))
+    async deleteOne(req, res, next) {
+        try {
+            const idPlanet = req.params.idPlanet;
+            const deleteResult = await planetsRepository.deleteOne(idPlanet);
+            if (deleteResult) {
+                //J'ai supprimé une planète
+                res.status(204).end();
+            } else {
+                //La planète n''existait pas
+                return next(HTTPERROR.NotFound(`La planète avec l'identifiant ${req.params.idPlanet} n'existe pas.`));
+            }
+        } catch (err) {
+            return next(err);
         }
-        PLANETS.splice(index, 1);
-        res.status(204).end();
+        
     }
 
     async post(req, res, next) {
